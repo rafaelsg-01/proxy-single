@@ -1,87 +1,72 @@
-import { pipeline } from 'node:stream/promises';
+// index.js
+import http from 'node:http';
+import https from 'node:https';
+import { pipeline } from 'node:stream';
+import { promisify } from 'node:util';
 
-// Para usar RESPONSE_STREAM, o handler principal precisa ser envolvido pelo awslambda.streamifyResponse
-// Esta variável global 'awslambda' é fornecida automaticamente pelo runtime da AWS Lambda.
-export const handler = awslambda.streamifyResponse(async (event, responseStream, context) => {
-    try {
-        // --- Autenticação e Validação ---
+const pipe = promisify(pipeline);
 
-        // 1. Obter o token do ambiente da Lambda
-        // Você deve configurar uma variável de ambiente chamada 'PROXY_TOKEN' na sua função Lambda.
-        const Const_tokenEnv = process.env.PROXY_TOKEN;
+export const handler = awslambda.streamifyResponse(
+  async (event, responseStream, context) => {
+    
+    const queryParams = event.queryStringParameters || {};
+    const url = queryParams.url;
+    const token = queryParams.token;
 
-        // 2. Obter parâmetros da query string
-        const Const_tokenQueryRequest = event.queryStringParameters?.token;
-        const Const_urlQueryRequest = event.queryStringParameters?.url;
-
-        // 3. Obter o método e corpo da requisição
-        const Const_methodRequest = event.requestContext.http.method;
-        const Const_bodyRequest = event.body;
-
-        if (Const_tokenQueryRequest !== Const_tokenEnv) {
-            console.log('Token inválido:', Const_tokenQueryRequest);
-            responseStream.write('Token inválido');
-            responseStream.end();
-            return;
-        }
-
-        if (!Const_urlQueryRequest) {
-            console.log('Parâmetro de URL ausente');
-            responseStream.write('Parâmetro de URL ausente');
-            responseStream.end();
-            return;
-        }
-
-        if (Const_methodRequest?.toUpperCase() !== 'GET' && Const_methodRequest?.toUpperCase() !== 'POST') {
-            console.log('Método inválido:', Const_methodRequest);
-            responseStream.write('Método não permitido');
-            responseStream.end();
-            return;
-        }
-
-        // --- Realiza a Requisição (Fetch) ---
-
-        const Const_headersAuthorizationRequest = event.headers['Authorization'] || event.headers['authorization'];
-        const Const_headersContentTypeRequest = event.headers['Content-Type'] || event.headers['content-type'];
-
-        const Let_requestInitFetch = {
-            method: Const_methodRequest,
-            headers: {},
-        };
-
-        // Adiciona o corpo (body) apenas para métodos que o suportam, como POST
-        if (Const_bodyRequest && Const_methodRequest?.toUpperCase() === 'POST') {
-            Let_requestInitFetch.body = Const_bodyRequest;
-        }
-        
-        if (Const_headersAuthorizationRequest) {
-            Let_requestInitFetch.headers['Authorization'] = Const_headersAuthorizationRequest;
-        }
-
-        if (Const_headersContentTypeRequest) {
-            Let_requestInitFetch.headers['Content-Type'] = Const_headersContentTypeRequest;
-        }
-
-        const Const_responseFetch = await fetch(Const_urlQueryRequest, Let_requestInitFetch);
-
-        // --- Streaming da Resposta ---
-
-        // Define os metadados da resposta HTTP (status e headers)
-        const metadata = {
-            statusCode: Const_responseFetch.status,
-            headers: Object.fromEntries(Const_responseFetch.headers.entries())
-        };
-
-        // Cria o stream de resposta HTTP com os metadados
-        const httpResponseStream = awslambda.HttpResponseStream.from(responseStream, metadata);
-
-        // Usa 'pipeline' para transmitir o corpo da resposta do fetch diretamente para a resposta da Lambda.
-        // Isso é eficiente em termos de memória, pois não carrega o corpo inteiro na memória.
-        await pipeline(Const_responseFetch.body, httpResponseStream);
-
-    } catch (error) {
-        console.error('Ocorreu um erro:', error);
-        responseStream.write('Erro interno do servidor.');
-        responseStream.end();
+    // Valida se passou token e se é igual a '123'
+    if (!token || token !== '123') {
+      const errorResponse = {
+        statusCode: 403,
+        body: JSON.stringify({ error: "Token inválido ou ausente" }),
+      };
+      responseStream = awslambda.HttpResponseStream.from(responseStream, errorResponse);
+      responseStream.end();
+      return;
     }
-});
+
+    if (!url) {
+      const errorResponse = {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Parâmetro ?url é obrigatório" }),
+      };
+      responseStream = awslambda.HttpResponseStream.from(responseStream, errorResponse);
+      responseStream.end();
+      return;
+    }
+
+    const method = event.requestContext.http.method || 'GET';
+    const lib = url.startsWith('https') ? https : http;
+
+    // Prepara os headers para repassar, se existirem
+    const forwardedHeaders = {};
+    if (event.headers?.authorization) {
+      forwardedHeaders['Authorization'] = event.headers.authorization;
+    }
+    if (event.headers?.['content-type']) {
+      forwardedHeaders['Content-Type'] = event.headers['content-type'];
+    }
+
+    await new Promise((resolve, reject) => {
+      const req = lib.request(url, { method, headers: forwardedHeaders }, (res) => {
+        const metadata = {
+          statusCode: res.statusCode,
+          headers: {
+            "Content-Type": res.headers['content-type'] || 'text/plain'
+          }
+        };
+        responseStream = awslambda.HttpResponseStream.from(responseStream, metadata);
+
+        pipe(res, responseStream).then(resolve).catch(reject);
+      });
+
+      req.on('error', (err) => reject(err));
+
+      if (method === 'POST' && event.body) {
+        const body = event.isBase64Encoded ? Buffer.from(event.body, 'base64') : event.body;
+        req.write(body);
+      }
+
+      req.end();
+    });
+  }
+);
