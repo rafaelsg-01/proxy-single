@@ -51,7 +51,9 @@ functions.http('proxySingle', async (Parameter_request, Parameter_response) => {
         const Const_responseFetch = await fetch(Const_urlQueryRequest, Let_requestInitFetch);
 
         Const_responseFetch.headers.forEach((Parameter_value, Paramete_name) => {
-            Parameter_response.setHeader(Paramete_name, Parameter_value);
+            if (Paramete_name.toLowerCase() !== 'content-encoding' && Paramete_name.toLowerCase() !== 'transfer-encoding' && Paramete_name.toLowerCase() !== 'connection') {
+                Parameter_response.setHeader(Paramete_name, Parameter_value);
+            }
         });
 
         Parameter_response.status(Const_responseFetch.status);
