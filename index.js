@@ -1,110 +1,91 @@
-// Importe a função 'pipeline' para conectar os streams de forma segura.
 import { pipeline } from 'node:stream/promises';
-// O aws-lambda-ric (Runtime Interface Client) já inclui o 'fetch' no Node.js 18+.
 
-export const handler = async (event) => {
-    // A AWS Lambda com streaming não usa um handler com 'responseStream' diretamente
-    // quando se usa o runtime Node.js 18+. O runtime detecta o streaming
-    // e permite retornar um objeto de resposta que contém um corpo de stream.
-    // Isso simplifica o código.
-
-    // O 'if (Const_pathname === '/proxy-single')' foi removido pois a própria
-    // invocação da função pelo API Gateway já faz esse roteamento.
-
+// O handler agora é envolvido por awslambda.streamifyResponse.
+// Isso adiciona um segundo argumento, 'responseStream', ao nosso handler.
+export const handler = awslambda.streamifyResponse(async (event, responseStream) => {
     try {
-        // --- Autenticação \/ ---
-        // Acessa a variável de ambiente configurada na própria função Lambda.
+        // --- Autenticação \/ --- (Lógica idêntica à anterior)
         const Const_tokenEnv = process.env.TOKEN_PROXY_SELF;
-
-        // Parâmetros vêm de 'event.queryStringParameters'.
         const Const_tokenQueryRequest = event.queryStringParameters?.token;
         const Const_urlQueryRequest = event.queryStringParameters?.url;
-        // Método e corpo vêm do objeto 'event'.
         const Const_methodRequest = event.httpMethod;
-        // O corpo da requisição na Lambda é uma string.
         const Const_bodyRequest = event.body;
 
         if (Const_tokenQueryRequest !== Const_tokenEnv) {
             console.log('Invalid token:', Const_tokenQueryRequest);
-            return {
-                statusCode: 451,
-                headers: { "Content-Type": "text/plain" },
-                body: 'invalid token'
-            };
+            // Com o stream, escrevemos os metadados antes de enviar o corpo.
+            responseStream.setContentType('text/plain');
+            responseStream.write('invalid token');
+            responseStream.end();
+            // A AWS usa os metadados HTTP para definir o status. Aqui não definimos, então o padrão é 200.
+            // Para status de erro, é preciso usar a API de metadados.
+            // Por simplicidade em erros, a abordagem anterior (retornar objeto) é mais fácil.
+            // Vamos focar no caso de sucesso, que é onde o streaming importa.
+            // Para erros, podemos simplesmente retornar um objeto como antes, se a função não for stream por padrão.
+            // Mas vamos manter a consistência aqui:
+            const metadata = { statusCode: 451 };
+            const fullResponse = { ...metadata, body: 'invalid token' };
+            // A API de stream não tem uma forma fácil de setar status code depois de iniciada,
+            // então para erros, o retorno de um objeto é mais prático.
+            // Vamos misturar as abordagens: objeto para erro, stream para sucesso.
+            return { statusCode: 451, body: 'invalid token', headers: {'Content-Type': 'text/plain'} };
         }
 
         if (!Const_urlQueryRequest) {
-            console.log('Missing url parameter');
-            return {
-                statusCode: 452,
-                headers: { "Content-Type": "text/plain" },
-                body: 'missing url parameter'
-            };
+            return { statusCode: 452, body: 'missing url parameter', headers: {'Content-Type': 'text/plain'} };
         }
 
         if (Const_methodRequest?.toUpperCase() !== 'GET' && Const_methodRequest?.toUpperCase() !== 'POST') {
-            console.log('Invalid method:', Const_methodRequest);
-            return {
-                statusCode: 453,
-                headers: { "Content-Type": "text/plain" },
-                body: 'Method Not Allowed'
-            };
+             return { statusCode: 453, body: 'Method Not Allowed', headers: {'Content-Type': 'text/plain'} };
         }
         // --- Autenticação /\ ---
 
 
         // --- Realiza request \/ ---
-        // Cabeçalhos na Lambda vêm em 'event.headers' e são geralmente minúsculos.
         const Const_headersAuthorizationRequest = event.headers?.authorization;
         const Const_headersContentTypeRequest = event.headers?.['content-type'];
 
         let Let_urlFetch = Const_urlQueryRequest;
-        let Let_requestInitFetch = {};
-
-        if (Const_methodRequest) {
-            Let_requestInitFetch.method = Const_methodRequest;
-        }
-
-        // Adiciona o corpo apenas se ele existir, para não quebrar requisições GET.
-        if (Const_bodyRequest) {
-            Let_requestInitFetch.body = Const_bodyRequest;
-        }
-
-        // Inicia um objeto de cabeçalhos vazio para evitar erros.
-        Let_requestInitFetch.headers = {};
+        let Let_requestInitFetch = {
+            method: Const_methodRequest,
+            headers: {}
+        };
+        
+        // O `fetch` permite que o corpo seja undefined, então não precisamos do 'if'.
+        Let_requestInitFetch.body = Const_bodyRequest;
 
         if (Const_headersAuthorizationRequest) {
             Let_requestInitFetch.headers['Authorization'] = Const_headersAuthorizationRequest;
         }
-
         if (Const_headersContentTypeRequest) {
             Let_requestInitFetch.headers['Content-Type'] = Const_headersContentTypeRequest;
         }
 
-        // Realiza a chamada fetch. O fetch é nativo no runtime Node.js 18+ da AWS.
         const Const_responseFetch = await fetch(Let_urlFetch, Let_requestInitFetch);
 
-        // Converte os Headers do fetch para um objeto simples que a Lambda entende.
+        // Constrói o objeto de cabeçalhos da resposta final.
         const responseHeaders = {};
         Const_responseFetch.headers.forEach((value, key) => {
             responseHeaders[key] = value;
         });
+
+        // Escreve os metadados HTTP (status, headers) no stream de resposta.
+        // A AWS irá lê-los e montar a resposta HTTP real.
+        responseStream.writeHead(Const_responseFetch.status, responseHeaders);
+
+        // Agora, o mais importante: conectamos o stream do corpo da resposta do fetch
+        // diretamente ao stream de resposta da Lambda.
+        // Os dados fluirão do URL de destino para o cliente sem serem armazenados na memória.
+        await pipeline(Const_responseFetch.body, responseStream);
         
-        // Com o streaming ativado, você pode retornar o stream do corpo diretamente.
-        // O AWS Lambda se encarrega de fazer o pipe dos dados para o cliente.
-        return {
-            statusCode: Const_responseFetch.status,
-            headers: responseHeaders,
-            body: Const_responseFetch.body
-        };
+        // Não há retorno explícito aqui, pois o stream foi finalizado pelo pipeline.
         // --- Realiza request /\ ---
     }
     catch (Parameter_error) {
         console.error('Error processing request:', Parameter_error);
-        return {
-            statusCode: 450,
-            headers: { "Content-Type": "text/plain" },
-            body: 'Internal Server Error'
-        };
+        // Em caso de erro catastrófico, escrevemos uma resposta de erro no stream.
+        responseStream.writeHead(450, { 'Content-Type': 'text/plain' });
+        responseStream.write('Internal Server Error');
+        responseStream.end();
     }
-};
+});
