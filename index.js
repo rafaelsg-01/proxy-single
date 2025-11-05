@@ -12,13 +12,13 @@ functions.http('proxySingle', async (Parameter_request, Parameter_response) => {
 
         if (Const_tokenQueryRequest !== Const_tokenEnv) {
             console.log('Invalid token:', Const_tokenQueryRequest);
-            Parameter_response.status(461).send('invalid token');
+            Parameter_response.status(461).send('Invalid token');
             return;
         }
 
         if (!Const_urlQueryRequest) {
             console.log('Missing url parameter');
-            Parameter_response.status(462).send('missing url parameter');
+            Parameter_response.status(462).send('Missing url parameter');
             return;
         }
 
