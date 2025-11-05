@@ -1,7 +1,7 @@
 const functions = require('@google-cloud/functions-framework');
 const fetch = require('node-fetch');
 
-functions.http('proxyHttp', async (Parameter_request, Parameter_response) => {
+functions.http('proxySingle', async (Parameter_request, Parameter_response) => {
     try {
         // --- Autenticação ---
         const Const_tokenEnv = process.env.TOKEN_PROXY_SELF;

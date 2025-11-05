@@ -1,6 +1,17 @@
 {
-  "dependencies": {
-    "@google-cloud/functions-framework": "^3.0.0",
-    "node-fetch": "^2.6.6"
-  }
+    "name": "proxy-single",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "set TOKEN_PROXY_SELF=\"test123\" && functions-framework --target=proxySingle",
+        "start": "functions-framework --target=proxySingle"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@google-cloud/functions-framework": "^3.0.0",
+        "node-fetch": "^2.6.6"
+    }
 }
