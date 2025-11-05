@@ -77,12 +77,9 @@ export const handler = awslambda.streamifyResponse(
             }
 
             const Const_allowedHeaders = [
-                'Accept',
                 'Accept-Language',
                 'Authorization',
-                'Cache-Control',
                 'Content-Type',
-                'Pragma',
                 'Sec-CH-UA',
                 'Sec-CH-UA-Mobile',
                 'Sec-CH-UA-Platform',
@@ -90,10 +87,7 @@ export const handler = awslambda.streamifyResponse(
                 'Sec-Fetch-Mode',
                 'Sec-Fetch-Site',
                 'Sec-Fetch-User',
-                'Upgrade-Insecure-Requests',
-                'User-Agent',
                 'Referer',
-                'Referrer-Policy'
             ]
 
             for (let Let_single of Const_allowedHeaders) {
