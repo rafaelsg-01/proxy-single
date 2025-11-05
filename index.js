@@ -12,7 +12,7 @@ export const handler = awslambda.streamifyResponse(
     async (Parameter_event, Parameter_responseStream, Const_context) => {
         try {
             // Autenticação \/
-            const Const_tokenEnv = '123' || process.env.TOKEN_PROXY_SELF
+            const Const_tokenEnv = process.env.TOKEN_PROXY_SELF
 
             const Const_tokenQueryRequest = Parameter_event.queryStringParameters?.token
             const Const_urlQueryRequest = Parameter_event.queryStringParameters?.url
