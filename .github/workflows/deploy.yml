@@ -1,0 +1,39 @@
+# Nome do seu fluxo de trabalho
+name: Deploy to AWS Lambda
+
+# Define o gatilho: este fluxo de trabalho roda a cada push na branch 'main'
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # Usa a versão mais recente do Ubuntu como ambiente de execução
+    runs-on: ubuntu-latest
+    
+    # Permissões necessárias para autenticação OIDC e para ler o código
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # 1. Faz o checkout do seu código do repositório
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Configura as credenciais da AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Cole aqui o ARN da role que você criou na AWS
+          role-to-assume: arn:aws:iam::031102503558:role/GitHubActionRole
+          aws-region: us-east-2 # Ex: us-east-1
+
+      # 3. Implanta a função Lambda
+      - name: Deploy Lambda Function
+        uses: aws-actions/aws-lambda-deploy@v1
+        with:
+          function-name: myFunctionName
+          # Opcional: especifique o diretório que contém o código da função
+          code-artifacts-dir: ./
