@@ -16,27 +16,27 @@ export const handler = awslambda.streamifyResponse(
         const Const_bodyRequest = event.body
 
         if (Const_tokenQueryRequest !== Const_tokenEnv) {
-            const errorResponse = {
+            const metadata = {
                 statusCode: 403,
                 headers: {
-                    "Content-Type": 'text/plain'
-                },
-                body: "Token inválido ou ausente",
+                    "Content-Type": "text/plain"
+                }
             };
-            responseStream = awslambda.HttpResponseStream.from(responseStream, errorResponse);
+            responseStream = awslambda.HttpResponseStream.from(responseStream, metadata);
+            responseStream.write("Token inválido ou ausente");
             responseStream.end();
             return;
         }
 
         if (!Const_urlQueryRequest) {
-            const errorResponse = {
+            const metadata = {
                 statusCode: 400,
                 headers: {
                     "Content-Type": 'text/plain'
-                },
-                body: "Parâmetro ?url é obrigatório",
+                }
             };
-            responseStream = awslambda.HttpResponseStream.from(responseStream, errorResponse);
+            responseStream = awslambda.HttpResponseStream.from(responseStream, metadata);
+            responseStream.write("Parâmetro ?url é obrigatório");
             responseStream.end();
             return;
         }
@@ -55,10 +55,10 @@ export const handler = awslambda.streamifyResponse(
         await new Promise((resolve, reject) => {
         const req = lib.request(Const_urlQueryRequest, { method: Const_methodRequest, headers: forwardedHeaders }, (res) => {
             const metadata = {
-            statusCode: res.statusCode,
-            headers: {
-                "Content-Type": res.headers['content-type'] || 'text/plain'
-            }
+                statusCode: res.statusCode,
+                headers: {
+                    "Content-Type": res.headers['content-type'] || 'text/plain'
+                }
             };
             responseStream = awslambda.HttpResponseStream.from(responseStream, metadata);
 
