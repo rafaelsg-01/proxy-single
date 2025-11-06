@@ -18,6 +18,7 @@ export const handler = awslambda.streamifyResponse(
             const Const_urlQueryRequest = Parameter_event.queryStringParameters?.url
             const Const_methodRequest = Parameter_event.requestContext.http.method
             const Const_bodyRequest = Parameter_event.body
+            console.log('Parameter_event', Parameter_event)
 
             if (Const_tokenQueryRequest !== Const_tokenEnv) {
                 //console.log('Invalid token:', Const_tokenQueryRequest)
