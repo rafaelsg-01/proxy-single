@@ -17,6 +17,19 @@ jobs:
       id-token: write
       contents: read
 
+    strategy:
+      matrix:
+        # Defina aqui sua lista de funções e regiões
+        lambda:
+          - name: proxy-single-01
+            region: us-east-1
+          - name: proxy-single-02
+            region: us-east-2
+          - name: proxy-single-03
+            region: us-west-1
+          - name: proxy-single-04
+            region: us-west-2
+
     steps:
       # 1. Faz o checkout do seu código do repositório
       - name: Checkout code
@@ -28,12 +41,14 @@ jobs:
         with:
           # Cole aqui o ARN da role que você criou na AWS
           role-to-assume: arn:aws:iam::031102503558:role/GitHubActionRole
-          aws-region: us-east-2 # Ex: us-east-1
+          # Usa a região da matriz atual
+          aws-region: ${{ matrix.lambda.region }}
 
       # 3. Implanta a função Lambda
       - name: Deploy Lambda Function
         uses: aws-actions/aws-lambda-deploy@v1
         with:
-          function-name: myFunctionName
+          # Usa o nome da função da matriz atual
+          function-name: ${{ matrix.lambda.name }}
           # Opcional: especifique o diretório que contém o código da função
           code-artifacts-dir: ./
