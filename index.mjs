@@ -131,7 +131,7 @@ export const handler = awslambda.streamifyResponse(
                 }
             }
             Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
-            Parameter_responseStream.write("Internal Server Error")
+            Parameter_responseStream.write("Internal Server Error: " + Parameter_event.message, ' | ', Parameter_event.queryStringParameters?.url)
             Parameter_responseStream.end()
             return
         }
