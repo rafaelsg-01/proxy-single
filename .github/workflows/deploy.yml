@@ -29,6 +29,64 @@ jobs:
             region: us-west-1
           - name: proxy-single-04
             region: us-west-2
+          - name: proxy-single-05
+            region: af-south-1
+          - name: proxy-single-06
+            region: ap-east-1
+          - name: proxy-single-07
+            region: ap-south-2
+          - name: proxy-single-08
+            region: ap-southeast-3
+          - name: proxy-single-09
+            region: ap-southeast-5
+          - name: proxy-single-10
+            region: ap-southeast-4
+          - name: proxy-single-11
+            region: ap-south-1
+          - name: proxy-single-12
+            region: ap-southeast-6
+          - name: proxy-single-13
+            region: ap-northeast-3
+          - name: proxy-single-14
+            region: ap-northeast-2
+          - name: proxy-single-15
+            region: ap-southeast-1
+          - name: proxy-single-16
+            region: ap-southeast-2
+          - name: proxy-single-17
+            region: ap-east-2
+          - name: proxy-single-18
+            region: ap-southeast-7
+          - name: proxy-single-19
+            region: ap-northeast-1
+          - name: proxy-single-20
+            region: ca-central-1
+          - name: proxy-single-21
+            region: ca-west-1
+          - name: proxy-single-22
+            region: eu-central-1
+          - name: proxy-single-23
+            region: eu-west-1
+          - name: proxy-single-24
+            region: eu-west-2
+          - name: proxy-single-25
+            region: eu-south-1
+          - name: proxy-single-26
+            region: eu-west-3
+          - name: proxy-single-27
+            region: eu-south-2
+          - name: proxy-single-28
+            region: eu-north-1
+          - name: proxy-single-29
+            region: eu-central-2
+          - name: proxy-single-30
+            region: me-south-1
+          - name: proxy-single-31
+            region: me-central-1
+          - name: proxy-single-32
+            region: il-central-1
+          - name: proxy-single-33
+            region: sa-east-1
 
     steps:
       # 1. Faz o checkout do seu código do repositório
