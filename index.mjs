@@ -101,7 +101,7 @@ export const handler = awslambda.streamifyResponse(
 
             // Se simple=json ou simple=text, faz fetch simples
             if (Const_simpleQueryRequest === 'json' || Const_simpleQueryRequest === 'text') {
-                const Const_response = await fetch(Const_urlQueryRequest, Let_requestInitFetch)
+                /* const Const_response = await fetch(Const_urlQueryRequest, Let_requestInitFetch)
                 
                 let Let_data
                 if (Const_simpleQueryRequest === 'json') {
@@ -117,11 +117,37 @@ export const handler = awslambda.streamifyResponse(
                     headers: {
                         "Content-Type": Const_simpleQueryRequest === 'json' ? 'application/json' : 'text/plain'
                     }
+                } */
+
+                async function test() {
+                    console.log('Test 2 running')
+                    var a = await fetch('https://redecanais.lc/player3/rc-player/player/dist/jquery.videojs.4.5.2.api?cctk=cm1tclNKcVBEeFpDUm1sUngxRjgrV3JlbEpCMkFpTHFhVTJ6Tmc3bStkTkwrV1k3Z1RnTy9waGpWL3Z1RzVpU1VoZFpZcGdvSmp0clNBV3hUb3BTYUFrbkJPWGlOREM3bEdPT1ZGQXIyWGpWbU8yUHAzQTArVEtPdWlDTkpoMDJuMkVzeHQycW9hYlRFV3gxTzFvNU5mV2VJakYrTUNDMkVLSVpFWFcwY0RPSHVhQkhTS3FadUY1VDlvSndqdTVXcm1GT2JtWTdOT3RhQUVQSUdqTEdlSWdjSVZFMDF4WkNXc0tuT1NsVW1hN2NJMWlxZFo4WEZMZlp1bCtxRVp0c1RnQT0=&cctk2=cm1tclNKcVBEeFpDUm1sUngxRjgrV3JlbEpCMkFpTHFhVTJ6Tmc3bStkTkwrV1k3Z1RnTy9waGpWL3Z1RzVpU1VoZFpZcGdvSmp0clNBV3hUb3BTYUFrbkJPWGlOREM3bEdPT1ZGQXIyWGpWbU8yUHAzQTArVEtPdWlDTkpoMDJuMkVzeHQycW9hYlRFV3gxTzFvNU5mV2VJakYrTUMyZ0hxRitMbU8rUWpIbG5mdDRRZWpqNng0dnRJNTFpdXBRcVhnS0gyVnJjc0ZHTGtUT1BDbmNPWXhaRG5Nbmp3SmJHS0dkQ1NWV2hwS0lJVnFNUWJzTFhlMzI3MGpIWXBnaEpYQzF1eWc9&cctk3=cm1tclNKcVBEeFpDUm1sUngxRjgrV3JlbEpCMkFpTHFhVTJ6Tmc3bStkTkwrV1k3Z1RnTy9waGpWL3Z1RzVpU1VoZFpZcGdvSmp0clNBV3hUb3BTYUFrbkJPWGlOREM3bEdPT1ZGQXIyWGpWbU8yUHAzQTArVEtPdWlDTkpoMDJuMkVzeHQycW9hYlRFV3gxTzFvNU5mV2VJakYrTUNpaVQ3UmxPVERqVFVQT3Y1TlRPNVBudWk0SHN2azFnTzFVcm44SUdXTnZhckV5WFVIa0d4RERNOTFaRDBVYTJCVjNLcGZBYndKcXk2L0pZUUdGSXZnbVlMU1o2a2ZYWWVrc0R5dWd1d1VGZzE2dkJYMHZmR2ZR&cctk4=cm1tclNKcVBEeFpDUm1sUngxRjgrV3JlbEpCMkFpTHFhVTJ6Tmc3bStkTkwrV1k3Z1RnTy9waGpWL3Z1RzVpU1VoZFpZcGdvSmp0clNBV3hUb3BTYUFrbkJPWGlOREM3bEdPT1ZGQXIyWGpWbU8yUHAzQTArVEtPdWlDTkpoMDJuMkVzeHQycW9hYlRFV3gxTzFvNU5mV2VJakYrTUMyZ0hxRitKbmZoVkUzTjJLeEZNYUhsMkFwY2pmQjMrcjRVMGowRUhHZHJiTFlyV2dXcmJuelhEWk5iVzFZRnpTRnJOWmF2ZUhabHpKUE1KMHFsWWEwQ1V0REVvWEtRT2RrQkd3REF2bDVtaVJuK0tYa1RZWEduaFE9PQ==', {
+                        "headers": {
+                            "h31ffadrg3bb7": "h31ffadrg3fj345a",
+                            "x-requested-with": "RC-Site-Requests"
+                        },
+                        "redirect": "manual",
+                        "method": "GET"
+                    })
+                    //console.log('Status:')
+                    //console.log(a.status)
+                    var b = await a.text()
+                    //console.log('b')
+                    //console.log(b)
+
+                    const Const_metadata = {
+                        statusCode: 200,
+                        headers: {
+                            "Content-Type": 'text/plain'
+                        }
+                    }
+                    Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
+                    Parameter_responseStream.write(b)
+                    Parameter_responseStream.end()
+                    return
                 }
 
-                Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
-                Parameter_responseStream.write(Const_simpleQueryRequest === 'json' ? JSON.stringify(Let_data) : Let_data)
-                Parameter_responseStream.end()
+                await test()
             }
 
             else {
