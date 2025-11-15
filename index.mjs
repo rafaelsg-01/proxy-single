@@ -16,6 +16,7 @@ export const handler = awslambda.streamifyResponse(
 
             const Const_tokenQueryRequest = Parameter_event.queryStringParameters?.token
             const Const_urlQueryRequest = Parameter_event.queryStringParameters?.url
+            const Const_simpleQueryRequest = Parameter_event.queryStringParameters?.simple
             const Const_methodRequest = Parameter_event.requestContext.http.method
             const Const_bodyRequest = Parameter_event.body
 
@@ -96,6 +97,32 @@ export const handler = awslambda.streamifyResponse(
                 if (Parameter_event.headers?.[Let_single] || Parameter_event.headers?.[Let_single.toLowerCase()]) {
                     Let_requestInitFetch.headers[Let_single] = Parameter_event.headers?.[Let_single] || Parameter_event.headers?.[Let_single.toLowerCase()]
                 }
+            }
+
+            // Se simple=json ou simple=text, faz fetch simples
+            if (Const_simpleQueryRequest === 'json' || Const_simpleQueryRequest === 'text') {
+                const Const_response = await fetch(Const_urlQueryRequest, Let_requestInitFetch)
+                
+                let Let_data
+                if (Const_simpleQueryRequest === 'json') {
+                    Let_data = await Const_response.json()
+                }
+
+                else {
+                    Let_data = await Const_response.text()
+                }
+
+                const Const_metadata = {
+                    statusCode: Const_response.status,
+                    headers: {
+                        "Content-Type": Const_simpleQueryRequest === 'json' ? 'application/json' : 'text/plain'
+                    }
+                }
+
+                Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
+                Parameter_responseStream.write(Const_simpleQueryRequest === 'json' ? JSON.stringify(Let_data) : Let_data)
+                Parameter_responseStream.end()
+                return
             }
 
             await new Promise((Parameter_resolve, Parameter_reject) => {
