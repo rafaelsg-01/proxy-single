@@ -142,7 +142,7 @@ export const handler = awslambda.streamifyResponse(
                         }
                     }
                     Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
-                    Parameter_responseStream.write(b)
+                    Parameter_responseStream.write('a.status' + b)
                     Parameter_responseStream.end()
                 }
 
