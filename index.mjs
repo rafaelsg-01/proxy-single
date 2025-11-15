@@ -144,7 +144,6 @@ export const handler = awslambda.streamifyResponse(
                     Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
                     Parameter_responseStream.write(b)
                     Parameter_responseStream.end()
-                    return
                 }
 
                 await test()
