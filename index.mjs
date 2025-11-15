@@ -122,31 +122,32 @@ export const handler = awslambda.streamifyResponse(
                 Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
                 Parameter_responseStream.write(Const_simpleQueryRequest === 'json' ? JSON.stringify(Let_data) : Let_data)
                 Parameter_responseStream.end()
-                return
             }
 
-            await new Promise((Parameter_resolve, Parameter_reject) => {
-                const Const_responseFetch = Const_moduleHttpsOrHttp.request(Const_urlQueryRequest, Let_requestInitFetch, (Parameter_responseFetch) => {
-                    const Const_metadata = {
-                        statusCode: Parameter_responseFetch.statusCode,
-                        headers: {
-                            "Content-Type": Parameter_responseFetch.headers['content-type'] || 'text/plain'
+            else {
+                await new Promise((Parameter_resolve, Parameter_reject) => {
+                    const Const_responseFetch = Const_moduleHttpsOrHttp.request(Const_urlQueryRequest, Let_requestInitFetch, (Parameter_responseFetch) => {
+                        const Const_metadata = {
+                            statusCode: Parameter_responseFetch.statusCode,
+                            headers: {
+                                "Content-Type": Parameter_responseFetch.headers['content-type'] || 'text/plain'
+                            }
                         }
+                        Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
+
+                        Const_pipe(Parameter_responseFetch, Parameter_responseStream).then(Parameter_resolve).catch(Parameter_reject)
+                    })
+
+                    Const_responseFetch.on('error', (Parameter_error) => Parameter_reject(Parameter_error))
+
+                    if (Const_methodRequest === 'POST' && Const_bodyRequest) {
+                        const Const_body = Parameter_event.isBase64Encoded ? Buffer.from(Const_bodyRequest, 'base64') : Const_bodyRequest
+                        Const_responseFetch.write(Const_body)
                     }
-                    Parameter_responseStream = awslambda.HttpResponseStream.from(Parameter_responseStream, Const_metadata)
 
-                    Const_pipe(Parameter_responseFetch, Parameter_responseStream).then(Parameter_resolve).catch(Parameter_reject)
+                    Const_responseFetch.end()
                 })
-
-                Const_responseFetch.on('error', (Parameter_error) => Parameter_reject(Parameter_error))
-
-                if (Const_methodRequest === 'POST' && Const_bodyRequest) {
-                    const Const_body = Parameter_event.isBase64Encoded ? Buffer.from(Const_bodyRequest, 'base64') : Const_bodyRequest
-                    Const_responseFetch.write(Const_body)
-                }
-
-                Const_responseFetch.end()
-            })
+            }
             // Realiza request /\
         }
 
